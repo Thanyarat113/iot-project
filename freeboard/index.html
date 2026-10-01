@@ -121,27 +121,28 @@
             justify-content: center;
         }
 
-        /* ส่วนแสดงกราฟสถิติ (ย้ายขึ้นมาด้านบน) */
+        /* ส่วนแสดงกราฟสถิติ (ปรับให้ขนาดเล็กลงและกะทัดรัด) */
         .chart-container {
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 25px;
+            padding: 20px 25px;
             box-shadow: var(--shadow);
             margin-bottom: 25px;
             border: 2px solid rgba(255, 255, 255, 0.7);
+            max-width: 100%;
         }
 
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             flex-wrap: wrap;
             gap: 10px;
         }
 
         .chart-container h3 {
-            font-size: 16px;
+            font-size: 15px;
             color: #725677;
             font-weight: 600;
             display: flex;
@@ -152,10 +153,10 @@
         .avg-stats {
             display: flex;
             gap: 15px;
-            font-size: 13px;
+            font-size: 12px;
             color: #88708c;
             background: rgba(255, 255, 255, 0.8);
-            padding: 6px 15px;
+            padding: 5px 12px;
             border-radius: 12px;
             border: 1px solid rgba(214, 162, 185, 0.3);
         }
@@ -163,6 +164,13 @@
         .avg-stats span {
             font-weight: 600;
             color: #d87093;
+        }
+
+        /* ควบคุมความสูงของกล่อง Canvas ให้เล็กลง */
+        .chart-wrapper {
+            position: relative;
+            height: 180px; 
+            width: 100%;
         }
 
         .grid-dashboard {
@@ -270,16 +278,18 @@
             </div>
         </div>
 
-        <!-- กราฟแสดงสถิติแบบเรียลไทม์ (ย้ายมาไว้ด้านบน พร้อมแสดงค่าเฉลี่ย) -->
+        <!-- กราฟแสดงสถิติแบบเรียลไทม์ (ขนาดกะทัดรัด เล็กลง) -->
         <div class="chart-container">
             <div class="chart-header">
-                <h3><i class="fa-solid fa-chart-line"></i> กราฟแนวโน้มอุณหภูมิและความชื้นแบบเรียลไทม์</h3>
+                <h3><i class="fa-solid fa-chart-line"></i> กราฟแนวโน้มอุณหภูมิและความชื้น</h3>
                 <div class="avg-stats">
                     <div>อุณหภูมิเฉลี่ย: <span id="avg-temp">--</span> °C</div>
                     <div>ความชื้นเฉลี่ย: <span id="avg-humi">--</span> %</div>
                 </div>
             </div>
-            <canvas id="envChart" height="100"></canvas>
+            <div class="chart-wrapper">
+                <canvas id="envChart"></canvas>
+            </div>
         </div>
 
         <!-- การ์ดแสดงผลเซนเซอร์ทั้ง 6 ค่า -->
@@ -363,7 +373,7 @@
         const db = getDatabase(app);
         const latestRef = ref(db, 'lab/esp32-01/latest');
 
-        // ตั้งค่ากราฟ Chart.js
+        // ตั้งค่ากราฟ Chart.js (กำหนดให้ responsive และ maintainAspectRatio เป็น false เพื่อให้พอดีกับความสูงใหม่)
         const ctx = document.getElementById('envChart').getContext('2d');
         const envChart = new Chart(ctx, {
             type: 'line',
@@ -376,7 +386,9 @@
                         backgroundColor: 'rgba(255, 133, 162, 0.1)',
                         data: [],
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3
                     },
                     {
                         label: 'ความชื้น (%)',
@@ -384,17 +396,21 @@
                         backgroundColor: 'rgba(161, 196, 253, 0.1)',
                         data: [],
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3
                     }
                 ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top' }
+                    legend: { position: 'top', labels: { boxWidth: 12, font: { family: 'Prompt', size: 12 } } }
                 },
                 scales: {
-                    y: { beginAtZero: false }
+                    y: { beginAtZero: false, ticks: { font: { family: 'Prompt', size: 10 } } },
+                    x: { ticks: { font: { family: 'Prompt', size: 10 } } }
                 }
             }
         });
@@ -422,7 +438,6 @@
                 document.getElementById('val-pm25').innerText = pm25;
                 document.getElementById('val-voltage').innerText = voltage;
 
-                // คำแนะนำย่อยแต่ละการ์ด
                 let sugTemp = "อากาศปกติ สบายตัว 😊";
                 if (temp > 32) sugTemp = "อากาศร้อน ระวังฮีทสโตรก ☀️";
                 else if (temp < 24) sugTemp = "อากาศเย็นสบายกำลังดี 🍃";
@@ -451,7 +466,6 @@
                 if (voltage < 3.0) sugVoltage = "ระวัง! แรงดันแบตเตอรี่ต่ำเกินไป";
                 document.getElementById('sug-voltage').innerText = sugVoltage;
 
-                // สรุปภาพรวมอัจฉริยะ
                 const summaryTitle = document.getElementById('summary-title');
                 const summaryDesc = document.getElementById('summary-desc');
                 if (pm25 > 50 || temp > 33) {
@@ -462,7 +476,6 @@
                     summaryDesc.innerText = "ทุกค่าเซนเซอร์อยู่ในระดับที่ปลอดภัย เหมาะแก่การทำกิจกรรมและการทำงาน";
                 }
 
-                // อัปเดตกราฟสถิติแบบเรียลไทม์ และคำนวณค่าเฉลี่ย
                 const timeString = new Date().toLocaleTimeString('th-TH');
                 if (envChart.data.labels.length > 10) {
                     envChart.data.labels.shift();
@@ -474,7 +487,6 @@
                 envChart.data.datasets[1].data.push(Number(humi));
                 envChart.update();
 
-                // คำนวณค่าเฉลี่ยจากข้อมูลในกราฟ
                 const tempArr = envChart.data.datasets[0].data;
                 const humiArr = envChart.data.datasets[1].data;
                 const avgTempVal = (tempArr.reduce((a, b) => a + b, 0) / tempArr.length).toFixed(1);
