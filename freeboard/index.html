@@ -3,64 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT Realtime Dashboard - 113</title>
-    <!-- Tailwind CSS สำหรับตกแต่งหน้าเว็บ -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK สำหรับดึงข้อมูลแบบ Realtime -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <title>Smart IoT Dashboard - Student 113</title>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome สำหรับไอคอนน่ารักๆ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #ffe6f0 0%, #e6f0ff 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-color: #554359;
+            --primary-pink: #ff85a2;
+            --accent-purple: #b5838d;
+            --shadow: 0 10px 30px rgba(214, 162, 185, 0.25);
+        }
 
-        // ตั้งค่า URL ฐานข้อมูล Firebase ของนักศึกษา
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Prompt', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            font-size: 26px;
+            color: #d87093;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        header p {
+            font-size: 14px;
+            color: #88708c;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 16px;
+            background: #d4edda;
+            color: #155724;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: transform 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-info h3 {
+            font-size: 15px;
+            color: #88708c;
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        .card-info .value {
+            font-size: 32px;
+            font-weight: 600;
+            color: #4a3b4c;
+        }
+
+        .card-info .unit {
+            font-size: 16px;
+            margin-left: 4px;
+            color: #a593a8;
+        }
+
+        .card-info .suggestion {
+            font-size: 12px;
+            margin-top: 6px;
+            color: #d87093;
+            font-weight: 500;
+        }
+
+        .card-icon {
+            width: 65px;
+            height: 65px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        }
+
+        /* โทนสีพาสเทลหวานๆ แยกตามการ์ด */
+        .icon-temp { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%); }
+        .icon-humi { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+        .icon-light { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .icon-sound { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .icon-pm25 { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color: #666 !important; }
+        .icon-voltage { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); color: #333 !important; }
+
+        footer {
+            text-align: center;
+            font-size: 13px;
+            color: #88708c;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1><i class="fa-solid fa-seedling"></i> Smart IoT Environment Dashboard</h1>
+            <p>ระบบติดตามสภาพแวดล้อมอัจฉริยะ (Student ID: 113)</p>
+            <div class="status-badge" id="connection-status">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> กำลังเชื่อมต่อฐานข้อมูล...
+            </div>
+        </header>
+
+        <div class="grid-dashboard">
+            <!-- 1. Temperature -->
+            <div class="card">
+                <div class="card-info">
+                    <h3>อุณหภูมิ (Temperature)</h3>
+                    <div><span class="value" id="val-temp">--</span><span class="unit">°C</span></div>
+                    <div class="suggestion" id="sug-temp">กำลังประเมินสภาพอากาศ...</div>
+                </div>
+                <div class="card-icon icon-temp"><i class="fa-solid fa-temperature-high"></i></div>
+            </div>
+
+            <!-- 2. Humidity -->
+            <div class="card">
+                <div class="card-info">
+                    <h3>ความชื้นสัมพัทธ์ (Humidity)</h3>
+                    <div><span class="value" id="val-humi">--</span><span class="unit">%</span></div>
+                    <div class="suggestion" id="sug-humi">กำลังประเมินความชื้น...</div>
+                </div>
+                <div class="card-icon icon-humi"><i class="fa-solid fa-droplet"></i></div>
+            </div>
+
+            <!-- 3. Light -->
+            <div class="card">
+                <div class="card-info">
+                    <h3>ความสว่าง (Light Intensity)</h3>
+                    <div><span class="value" id="val-light">--</span><span class="unit">Lux</span></div>
+                    <div class="suggestion" id="sug-light">กำลังตรวจสอบแสงสว่าง...</div>
+                </div>
+                <div class="card-icon icon-light"><i class="fa-solid fa-sun"></i></div>
+            </div>
+
+            <!-- 4. Sound -->
+            <div class="card">
+                <div class="card-info">
+                    <h3>ระดับเสียง (Sound Level)</h3>
+                    <div><span class="value" id="val-sound">--</span><span class="unit">dB</span></div>
+                    <div class="suggestion" id="sug-sound">กำลังวัดระดับเสียง...</div>
+                </div>
+                <div class="card-icon icon-sound"><i class="fa-solid fa-volume-high"></i></div>
+            </div>
+
+            <!-- 5. PM2.5 -->
+            <div class="card">
+                <div class="card-info">
+                    <h3>ฝุ่นละออง (PM2.5)</h3>
+                    <div><span class="value" id="val-pm25">--</span><span class="unit">µg/m³</span></div>
+                    <div class="suggestion" id="sug-pm25">กำลังตรวจสอบคุณภาพอากาศ...</div>
+                </div>
+                <div class="card-icon icon-pm25"><i class="fa-solid fa-wind"></i></div>
+            </div>
+
+            <!-- 6. Voltage -->
+            <div class="card">
+                <div class="card-info">
+                    <h3>แรงดันไฟระบบ (Voltage)</h3>
+                    <div><span class="value" id="val-voltage">--</span><span class="unit">V</span></div>
+                    <div class="suggestion" id="sug-voltage">ระบบพลังงานปกติ</div>
+                </div>
+                <div class="card-icon icon-voltage"><i class="fa-solid fa-bolt"></i></div>
+            </div>
+        </div>
+
+        <footer>
+            <p><i class="fa-regular fa-clock"></i> อัปเดตข้อมูลล่าสุด: <span id="update-time">-</span></p>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK (Modular v9) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // ตั้งค่าการเชื่อมต่อ Firebase ของโปรเจกต์ 113
         const firebaseConfig = {
-            databaseURL: "https://iot-113-default-rtdb.asia-southeast1.firebasedatabase.app/"
+            databaseURL: "https://iot-113-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
-        // ดึงข้อมูลแบบ Realtime จาก path /lab/esp32-01/latest
         const latestRef = ref(db, 'lab/esp32-01/latest');
+
         onValue(latestRef, (snapshot) => {
             const data = snapshot.val();
+            const statusBadge = document.getElementById('connection-status');
+
             if (data) {
-                document.getElementById('temp').innerText = (data.temp ?? 0) + " °C";
-                document.getElementById('hum').innerText = (data.humi ?? 0) + " %";
-                document.getElementById('light').innerText = (data.light ?? 0) + " lx";
-                
+                statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> เชื่อมต่อสำเร็จ (Real-time Active)';
+                statusBadge.style.background = '#d4edda';
+                statusBadge.style.color = '#155724';
+
+                // ดึงค่าทั้ง 6 ค่ามาแสดงผล
+                const temp = Number(data.temp || 0).toFixed(1);
+                const humi = Number(data.humi || 0).toFixed(1);
+                const light = Number(data.light || 0);
+                const sound = Number(data.sound || 0).toFixed(1);
+                const pm25 = Number(data.pm25 || 0).toFixed(1);
+                const voltage = Number(data.voltage || 0).toFixed(2);
+
+                document.getElementById('val-temp').innerText = temp;
+                document.getElementById('val-humi').innerText = humi;
+                document.getElementById('val-light').innerText = light;
+                document.getElementById('val-sound').innerText = sound;
+                document.getElementById('val-pm25').innerText = pm25;
+                document.getElementById('val-voltage').innerText = voltage;
+
+                // ระบบวิเคราะห์ข้อเสนอแนะที่เป็นประโยชน์ต่อผู้ใช้จริง
+                // 1. อุณหภูมิ
+                let sugTemp = "อากาศปกติ สบายตัว 😊";
+                if (temp > 32) sugTemp = "อากาศร้อน ระวังฮีทสโตรก ☀️";
+                else if (temp < 24) sugTemp = "อากาศเย็นสบายกำลังดี 🍃";
+                document.getElementById('sug-temp').innerText = sugTemp;
+
+                // 2. ความชื้น
+                let sugHumi = "ความชื้นอยู่ในเกณฑ์ดี 💧";
+                if (humi > 70) sugHumi = "อากาศชื้นสูง อาจรู้สึกเหนียวตัว";
+                else if (humi < 40) sugHumi = "อากาศค่อนข้างแห้ง";
+                document.getElementById('sug-humi').innerText = sugHumi;
+
+                // 3. แสงสว่าง
+                let sugLight = "แสงสว่างเหมาะสมสำหรับการทำงาน 💡";
+                if (light < 300) sugLight = "แสงน้อย ควรเปิดไฟเพิ่มเพื่อถนอมสายตา";
+                else if (light > 800) sugLight = "แสงจ้าเกินไป 🕶️";
+                document.getElementById('sug-light').innerText = sugLight;
+
+                // 4. เสียง
+                let sugSound = "สภาพแวดล้อมเงียบสงบ ดีต่อสมาธิ 🤫";
+                if (sound > 60) sugSound = "มีเสียงรบกวนค่อนข้างดัง 🔊";
+                document.getElementById('sug-sound').innerText = sugSound;
+
+                // 5. PM2.5 (มีประโยชน์ต่อสุขภาพ)
+                let sugPm25 = "คุณภาพอากาศดีเยี่ยม ปลอดภัย 🌿";
+                if (pm25 > 25 && pm25 <= 50) sugPm25 = "อากาศปานกลาง สวมหน้ากากหากจำเป็น";
+                else if (pm25 > 50) sugPm25 = "ฝุ่นค่อนข้างสูง ควรหลีกเลี่ยงกิจกรรมกลางแจ้ง 😷";
+                document.getElementById('sug-pm25').innerText = sugPm25;
+
+                // 6. Voltage
+                let sugVoltage = "แรงดันไฟฟ้าเสถียรปลอดภัย ⚡";
+                if (voltage < 3.0) sugVoltage = "ระวัง! แรงดันแบตเตอรี่ต่ำเกินไป";
+                document.getElementById('sug-voltage').innerText = sugVoltage;
+
+                // เวลาอัปเดต
                 if (data.timestamp) {
                     const date = new Date(data.timestamp * 1000);
-                    document.getElementById('update-time').innerText = "อัปเดตล่าสุด: " + date.toLocaleTimeString();
+                    document.getElementById('update-time').innerText = date.toLocaleTimeString('th-TH');
+                } else {
+                    document.getElementById('update-time').innerText = new Date().toLocaleTimeString('th-TH');
                 }
+
+            } else {
+                statusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ไม่พบข้อมูลในระบบ';
+                statusBadge.style.background = '#fff3cd';
+                statusBadge.style.color = '#856404';
             }
+        }, (error) => {
+            console.error("Firebase read error:", error);
+            const statusBadge = document.getElementById('connection-status');
+            statusBadge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> เชื่อมต่อฐานข้อมูลไม่สำเร็จ';
+            statusBadge.style.background = '#f8d7da';
+            statusBadge.style.color = '#721c24';
         });
     </script>
-</head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen p-6">
-    <div class="max-w-4xl mx-auto">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-extrabold text-cyan-400">IoT Realtime Sensor Dashboard</h1>
-            <p class="text-slate-400 mt-2">รหัสนักศึกษา: ...113 | ระบบมอนิเตอร์เซ็นเซอร์ ESP32 & Firebase</p>
-            <span id="update-time" class="inline-block mt-3 text-xs bg-slate-900 text-cyan-400 px-4 py-1.5 rounded-full border border-cyan-500/30">กำลังเชื่อมต่อฐานข้อมูล...</span>
-        </header>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- การ์ดแสดงผลอุณหภูมิ -->
-            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
-                <div class="text-slate-400 text-sm font-medium">🌡️ อุณหภูมิ (Temperature)</div>
-                <div id="temp" class="text-4xl font-extrabold text-cyan-400 mt-3">-- °C</div>
-            </div>
-            <!-- การ์ดแสดงผลความชื้น -->
-            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
-                <div class="text-slate-400 text-sm font-medium">💧 ความชื้น (Humidity)</div>
-                <div id="hum" class="text-4xl font-extrabold text-blue-400 mt-3">-- %</div>
-            </div>
-            <!-- การ์ดแสดงผลแสง -->
-            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
-                <div class="text-slate-400 text-sm font-medium">☀️ ความเข้มแสง (Light)</div>
-                <div id="light" class="text-4xl font-extrabold text-yellow-400 mt-3">-- lx</div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
