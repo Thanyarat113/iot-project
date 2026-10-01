@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Realtime Dashboard - 113</title>
+    <!-- Tailwind CSS สำหรับตกแต่งหน้าเว็บ -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK สำหรับดึงข้อมูลแบบ Realtime -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // ตั้งค่า URL ฐานข้อมูล Firebase ของนักศึกษา
+        const firebaseConfig = {
+            databaseURL: "https://iot-113-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ดึงข้อมูลแบบ Realtime จาก path /lab/esp32-01/latest
+        const latestRef = ref(db, 'lab/esp32-01/latest');
+        onValue(latestRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('temp').innerText = (data.temp ?? 0) + " °C";
+                document.getElementById('hum').innerText = (data.humi ?? 0) + " %";
+                document.getElementById('light').innerText = (data.light ?? 0) + " lx";
+                
+                if (data.timestamp) {
+                    const date = new Date(data.timestamp * 1000);
+                    document.getElementById('update-time').innerText = "อัปเดตล่าสุด: " + date.toLocaleTimeString();
+                }
+            }
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-extrabold text-cyan-400">IoT Realtime Sensor Dashboard</h1>
+            <p class="text-slate-400 mt-2">รหัสนักศึกษา: ...113 | ระบบมอนิเตอร์เซ็นเซอร์ ESP32 & Firebase</p>
+            <span id="update-time" class="inline-block mt-3 text-xs bg-slate-900 text-cyan-400 px-4 py-1.5 rounded-full border border-cyan-500/30">กำลังเชื่อมต่อฐานข้อมูล...</span>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- การ์ดแสดงผลอุณหภูมิ -->
+            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
+                <div class="text-slate-400 text-sm font-medium">🌡️ อุณหภูมิ (Temperature)</div>
+                <div id="temp" class="text-4xl font-extrabold text-cyan-400 mt-3">-- °C</div>
+            </div>
+            <!-- การ์ดแสดงผลความชื้น -->
+            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
+                <div class="text-slate-400 text-sm font-medium">💧 ความชื้น (Humidity)</div>
+                <div id="hum" class="text-4xl font-extrabold text-blue-400 mt-3">-- %</div>
+            </div>
+            <!-- การ์ดแสดงผลแสง -->
+            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
+                <div class="text-slate-400 text-sm font-medium">☀️ ความเข้มแสง (Light)</div>
+                <div id="light" class="text-4xl font-extrabold text-yellow-400 mt-3">-- lx</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
