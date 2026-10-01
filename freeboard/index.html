@@ -121,7 +121,7 @@
             justify-content: center;
         }
 
-        /* ส่วนแสดงกราฟสถิติ (ปรับให้ขนาดเล็กลงและกะทัดรัด) */
+        /* ส่วนแสดงกราฟสถิติ (ขนาดกะทัดรัด เล็กลง) */
         .chart-container {
             background: var(--card-bg);
             border-radius: 20px;
@@ -166,7 +166,6 @@
             color: #d87093;
         }
 
-        /* ควบคุมความสูงของกล่อง Canvas ให้เล็กลง */
         .chart-wrapper {
             position: relative;
             height: 180px; 
@@ -243,6 +242,53 @@
         .icon-pm25 { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color: #666 !important; }
         .icon-voltage { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); color: #333 !important; }
 
+        /* ส่วนตารางประวัติข้อมูลย้อนหลัง (History Table Section) */
+        .history-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .history-container h3 {
+            font-size: 16px;
+            color: #725677;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(214, 162, 185, 0.2);
+        }
+
+        th {
+            background: rgba(255, 133, 162, 0.1);
+            color: #d87093;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
         footer {
             text-align: center;
             font-size: 13px;
@@ -278,7 +324,7 @@
             </div>
         </div>
 
-        <!-- กราฟแสดงสถิติแบบเรียลไทม์ (ขนาดกะทัดรัด เล็กลง) -->
+        <!-- กราฟแสดงสถิติแบบเรียลไทม์ -->
         <div class="chart-container">
             <div class="chart-header">
                 <h3><i class="fa-solid fa-chart-line"></i> กราฟแนวโน้มอุณหภูมิและความชื้น</h3>
@@ -355,12 +401,37 @@
             </div>
         </div>
 
+        <!-- ตารางประวัติข้อมูลย้อนหลัง (History Table) -->
+        <div class="history-container">
+            <h3><i class="fa-solid fa-table-list"></i> ประวัติการบันทึกข้อมูลล่าสุด (Sensor Log History)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>เวลา</th>
+                            <th>อุณหภูมิ (°C)</th>
+                            <th>ความชื้น (%)</th>
+                            <th>ความสว่าง (Lux)</th>
+                            <th>เสียง (dB)</th>
+                            <th>PM2.5 (µg/m³)</th>
+                            <th>แรงดัน (V)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <tr>
+                            <td colspan="7" style="color: #88708c;">กำลังรอข้อมูลประวัติ...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <footer>
             <p><i class="fa-regular fa-clock"></i> อัปเดตข้อมูลล่าสุดจาก ESP32: <span id="update-time">-</span></p>
         </footer>
     </div>
 
-    <!-- Firebase SDK & Chart Logic -->
+    <!-- Firebase SDK & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
@@ -373,7 +444,7 @@
         const db = getDatabase(app);
         const latestRef = ref(db, 'lab/esp32-01/latest');
 
-        // ตั้งค่ากราฟ Chart.js (กำหนดให้ responsive และ maintainAspectRatio เป็น false เพื่อให้พอดีกับความสูงใหม่)
+        // ตั้งค่ากราฟ Chart.js
         const ctx = document.getElementById('envChart').getContext('2d');
         const envChart = new Chart(ctx, {
             type: 'line',
@@ -415,6 +486,9 @@
             }
         });
 
+        // อาเรย์เก็บประวัติสำหรับแสดงในตาราง (สูงสุด 5 รายการล่าสุด)
+        let historyLogs = [];
+
         onValue(latestRef, (snapshot) => {
             const data = snapshot.val();
             const statusBadge = document.getElementById('connection-status');
@@ -450,7 +524,7 @@
 
                 let sugLight = "แสงสว่างเหมาะสมสำหรับการทำงาน 💡";
                 if (light < 300) sugLight = "แสงน้อย ควรเปิดไฟเพิ่มเพื่อถนอมสายตา";
-                else if (light > 800) sugLight = "แสงจ้าเกินไป 🕶️";
+                else if (light > 800) sugLight = "แสงจ้าเกินไป 🕶️️";
                 document.getElementById('sug-light').innerText = sugLight;
 
                 let sugSound = "สภาพแวดล้อมเงียบสงบ ดีต่อสมาธิ 🤫";
@@ -477,6 +551,8 @@
                 }
 
                 const timeString = new Date().toLocaleTimeString('th-TH');
+                
+                // อัปเดตกราฟ
                 if (envChart.data.labels.length > 10) {
                     envChart.data.labels.shift();
                     envChart.data.datasets[0].data.shift();
@@ -494,6 +570,26 @@
 
                 document.getElementById('avg-temp').innerText = avgTempVal;
                 document.getElementById('avg-humi').innerText = avgHumiVal;
+
+                // เพิ่มข้อมูลเข้าสู่ตารางประวัติย้อนหลัง
+                historyLogs.unshift({ time: timeString, temp, humi, light, sound, pm25, voltage });
+                if (historyLogs.length > 5) historyLogs.pop(); // เก็บไว้ล่าสุด 5 แถว
+
+                let tableHtml = '';
+                historyLogs.forEach(log => {
+                    tableHtml += `
+                        <tr>
+                            <td><i class="fa-regular fa-clock"></i> ${log.time}</td>
+                            <td>${log.temp}</td>
+                            <td>${log.humi}</td>
+                            <td>${log.light}</td>
+                            <td>${log.sound}</td>
+                            <td>${log.pm25}</td>
+                            <td>${log.voltage}</td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('history-table-body').innerHTML = tableHtml;
 
                 if (data.timestamp) {
                     const date = new Date(data.timestamp * 1000);
