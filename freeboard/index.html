@@ -121,6 +121,50 @@
             justify-content: center;
         }
 
+        /* ส่วนแสดงกราฟสถิติ (ย้ายขึ้นมาด้านบน) */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chart-container h3 {
+            font-size: 16px;
+            color: #725677;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avg-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #88708c;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 6px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(214, 162, 185, 0.3);
+        }
+
+        .avg-stats span {
+            font-weight: 600;
+            color: #d87093;
+        }
+
         .grid-dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -191,26 +235,6 @@
         .icon-pm25 { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color: #666 !important; }
         .icon-voltage { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); color: #333 !important; }
 
-        /* ส่วนแสดงกราฟสถิติ */
-        .chart-container {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: var(--shadow);
-            margin-bottom: 25px;
-            border: 2px solid rgba(255, 255, 255, 0.7);
-        }
-
-        .chart-container h3 {
-            font-size: 16px;
-            color: #725677;
-            margin-bottom: 15px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         footer {
             text-align: center;
             font-size: 13px;
@@ -226,7 +250,7 @@
 
     <div class="container">
         <header>
-            <h1><i class="fa-solid fa-seedling"></i> Smart IoT Environment Dashboard</h1>
+            <h1><i class="fa-solid fa-seedling"></i> Smart Living & Eco Dashboard</h1>
             <p>ระบบติดตามสภาพแวดล้อมอัจฉริยะและวิเคราะห์ความปลอดภัย (Student ID: 113)</p>
             <div class="badges-wrapper">
                 <div class="status-badge" id="connection-status">
@@ -235,7 +259,7 @@
             </div>
         </header>
 
-        <!-- แบนเนอร์สรุปสถานะอัจฉริยะ (Smart Analysis Banner) -->
+        <!-- แบนเนอร์สรุปสถานะอัจฉริยะ -->
         <div class="summary-banner">
             <div class="summary-info">
                 <h2 id="summary-title">กำลังวิเคราะห์สิ่งแวดล้อม...</h2>
@@ -246,6 +270,19 @@
             </div>
         </div>
 
+        <!-- กราฟแสดงสถิติแบบเรียลไทม์ (ย้ายมาไว้ด้านบน พร้อมแสดงค่าเฉลี่ย) -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3><i class="fa-solid fa-chart-line"></i> กราฟแนวโน้มอุณหภูมิและความชื้นแบบเรียลไทม์</h3>
+                <div class="avg-stats">
+                    <div>อุณหภูมิเฉลี่ย: <span id="avg-temp">--</span> °C</div>
+                    <div>ความชื้นเฉลี่ย: <span id="avg-humi">--</span> %</div>
+                </div>
+            </div>
+            <canvas id="envChart" height="100"></canvas>
+        </div>
+
+        <!-- การ์ดแสดงผลเซนเซอร์ทั้ง 6 ค่า -->
         <div class="grid-dashboard">
             <!-- 1. Temperature -->
             <div class="card">
@@ -306,12 +343,6 @@
                 </div>
                 <div class="card-icon icon-voltage"><i class="fa-solid fa-bolt"></i></div>
             </div>
-        </div>
-
-        <!-- กราฟแสดงสถิติแบบเรียลไทม์ -->
-        <div class="chart-container">
-            <h3><i class="fa-solid fa-chart-line"></i> กราฟแนวโน้มอุณหภูมิและความชื้นแบบเรียลไทม์</h3>
-            <canvas id="envChart" height="100"></canvas>
         </div>
 
         <footer>
@@ -391,7 +422,7 @@
                 document.getElementById('val-pm25').innerText = pm25;
                 document.getElementById('val-voltage').innerText = voltage;
 
-                // อัปเดตคำแนะนำย่อยแต่ละตัวการ์ด
+                // คำแนะนำย่อยแต่ละการ์ด
                 let sugTemp = "อากาศปกติ สบายตัว 😊";
                 if (temp > 32) sugTemp = "อากาศร้อน ระวังฮีทสโตรก ☀️";
                 else if (temp < 24) sugTemp = "อากาศเย็นสบายกำลังดี 🍃";
@@ -420,7 +451,7 @@
                 if (voltage < 3.0) sugVoltage = "ระวัง! แรงดันแบตเตอรี่ต่ำเกินไป";
                 document.getElementById('sug-voltage').innerText = sugVoltage;
 
-                // ระบบวิเคราะห์ภาพรวมอัจฉริยะ (AI Smart Summary Banner)
+                // สรุปภาพรวมอัจฉริยะ
                 const summaryTitle = document.getElementById('summary-title');
                 const summaryDesc = document.getElementById('summary-desc');
                 if (pm25 > 50 || temp > 33) {
@@ -431,7 +462,7 @@
                     summaryDesc.innerText = "ทุกค่าเซนเซอร์อยู่ในระดับที่ปลอดภัย เหมาะแก่การทำกิจกรรมและการทำงาน";
                 }
 
-                // อัปเดตกราฟสถิติแบบเรียลไทม์
+                // อัปเดตกราฟสถิติแบบเรียลไทม์ และคำนวณค่าเฉลี่ย
                 const timeString = new Date().toLocaleTimeString('th-TH');
                 if (envChart.data.labels.length > 10) {
                     envChart.data.labels.shift();
@@ -439,9 +470,18 @@
                     envChart.data.datasets[1].data.shift();
                 }
                 envChart.data.labels.push(timeString);
-                envChart.data.datasets[0].data.push(temp);
-                envChart.data.datasets[1].data.push(humi);
+                envChart.data.datasets[0].data.push(Number(temp));
+                envChart.data.datasets[1].data.push(Number(humi));
                 envChart.update();
+
+                // คำนวณค่าเฉลี่ยจากข้อมูลในกราฟ
+                const tempArr = envChart.data.datasets[0].data;
+                const humiArr = envChart.data.datasets[1].data;
+                const avgTempVal = (tempArr.reduce((a, b) => a + b, 0) / tempArr.length).toFixed(1);
+                const avgHumiVal = (humiArr.reduce((a, b) => a + b, 0) / humiArr.length).toFixed(1);
+
+                document.getElementById('avg-temp').innerText = avgTempVal;
+                document.getElementById('avg-humi').innerText = avgHumiVal;
 
                 if (data.timestamp) {
                     const date = new Date(data.timestamp * 1000);
